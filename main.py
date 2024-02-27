@@ -2,35 +2,25 @@
 from WordEmbeddings import WordEmbeddings
 from semantic_search import SemanticSearch
 from openai_init import OpenaiInit
-from classifier.classifier import Classifier
+from fastapi import FastAPI,Query
+import json
+app = FastAPI()
+@app.get("/embeddings")
+async def root():
+    openai_init = OpenaiInit()
+    word_embeddings = WordEmbeddings(openai_init.openai_key)
+    word_embeddings.embedding()
+    return {"status": "Categories were successfully embedded"}
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    user_input = input("Enter 'y' or 'n': ")
-    openai_init= OpenaiInit()
-    if user_input.lower() == 'y':
-        word_embeddings = WordEmbeddings(openai_init.openai_key)
-        word_embeddings.embedding()
-    elif user_input.lower() == 'n':
-        print("The if statement will not be executed.")
-    else:
-        print("Invalid input. Please enter 'y' or 'n'.")
-
-    semantic_search = SemanticSearch(openai_init.openai_key)
+@app.get("/semantic_search")
+async def perform_semantic_search(sentence: str = Query(..., description="The sentence for semantic search")):
+    openai_init = OpenaiInit()
+    semantic_search = SemanticSearch(openai_init.openai_key,sentence)
     semantic_search.get_sorted_categories()
-
-    #classifier= Classifier("classifier/dataset.csv")
-    #classifier.classify()
-
-
-
-
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    result=semantic_search.relevant_categories()
+    with open('account_number_mapping.json', 'r') as file:
+        json_account_numbers = json.load(file)
+    with open('account_name_mapping.json', 'r') as file:
+        json_account_names = json.load(file)
+    response = [{json_account_names[str(value)]: json_account_numbers[str(value)]} for index, value in result.items()]
+    return response
