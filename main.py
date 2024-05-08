@@ -47,7 +47,8 @@ async def perform_semantic_search(sentence: str = Query(..., description="The se
         json_account_numbers = json.load(file)
     with open('account_name_mapping.json', 'r') as file:
         json_account_names = json.load(file)
-    response = [{json_account_names[str(value)]: json_account_numbers[str(value)]} for index, value in result.items()]
+    response = [{json_account_names[str(value)]: json_account_numbers[str(value)]} for index, value in result.items() if
+                str(value) in json_account_names and str(value) in json_account_numbers]
     return response
 
 
